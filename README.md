@@ -1,4 +1,4 @@
-# Infra Monitoring & Sécurité Docker – Projet B3 SR
+# Infra Docker – Projet B3 SR
 ## Équipe
 - Ferhat Bayrak – Abdessamad Makhloufi - Aimé Mbadinga - Mondi Xharda
 
