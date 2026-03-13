@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>InfraLab - Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #00d4ff; text-align: center; }
+        .card { background: #16213e; border-radius: 10px; padding: 20px; margin: 15px 0; border-left: 4px solid #00d4ff; }
+        .card h3 { color: #00d4ff; margin-top: 0; }
+        .info { display: flex; justify-content: space-between; flex-wrap: wrap; }
+        .info-item { flex: 1; min-width: 200px; margin: 10px; }
+        .badge { background: #0f3460; padding: 5px 15px; border-radius: 20px; display: inline-block; }
+        .healthy { border-color: #00ff88; }
+        .links a { color: #00d4ff; text-decoration: none; margin: 0 10px; }
+        .links { text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 InfraLab - Infrastructure Dashboard</h1>
+        <div class="card">
+            <h3>Informations du conteneur</h3>
+            <div class="info">
+                <div class="info-item"><strong>Hostname :</strong> <span class="badge">{{ hostname }}</span></div>
+                <div class="info-item"><strong>Environnement :</strong> <span class="badge">{{ environment }}</span></div>
+                <div class="info-item"><strong>Timestamp :</strong> <span class="badge">{{ timestamp }}</span></div>
+                <div class="info-item"><strong>Visites totales :</strong> <span class="badge">{{ visits }}</span></div>
+            </div>
+        </div>
+        <div class="card healthy">
+            <h3>⚖️ Load Balancing Demo</h3>
+            <p>Rechargez cette page plusieurs fois : le <strong>hostname</strong> change entre les 2 instances, prouvant que le load balancing Nginx fonctionne.</p>
+        </div>
+        <div class="links">
+            <a href="/health">🩺 Healthcheck</a> |
+            <a href="/api/info">ℹ️ API Info</a> |
+            <a href="/api/db-status">🗄️ DB Replication</a> |
+            <a href="/grafana">📊 Grafana</a> |
+            <a href="/prometheus">🔥 Prometheus</a>
+        </div>
+    </div>
+</body>
+</html>
