@@ -204,8 +204,7 @@ services:
     container_name: alertmanager
     command:
       - "--config.file=/etc/alertmanager/alertmanager.yml"
-      - "--web.external-url=/alertmanager/"
-      - "--web.route-prefix=/alertmanager/"
+      - "--web.external-url=http://4.233.219.209/alertmanager/"
     volumes:
       - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
