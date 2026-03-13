@@ -1,15 +1,47 @@
 import os
 import socket
 import datetime
+import time
 import psycopg2
 import redis
-from flask import Flask, render_template, jsonify
-from prometheus_flask_instrumentator import Instrumentator
+from flask import Flask, render_template, jsonify, Response
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("APP_SECRET_KEY", "dev-secret-key")
 
-Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+# --- Métriques Prometheus ---
+REQUEST_COUNT = Counter(
+    'flask_http_request_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+REQUEST_LATENCY = Histogram(
+    'flask_http_request_duration_seconds',
+    'HTTP request latency',
+    ['endpoint']
+)
+
+@app.before_request
+def start_timer():
+    from flask import g
+    g.start_time = time.time()
+
+@app.after_request
+def record_metrics(response):
+    from flask import g, request
+    latency = time.time() - getattr(g, 'start_time', time.time())
+    REQUEST_COUNT.labels(
+        method=request.method,
+        endpoint=request.path,
+        status=response.status_code
+    ).inc()
+    REQUEST_LATENCY.labels(endpoint=request.path).observe(latency)
+    return response
+
+@app.route("/metrics")
+def metrics():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 def get_redis():
     return redis.Redis(
