@@ -122,6 +122,12 @@ services:
       - backend
     restart: unless-stopped
     mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   postgres-replica:
     build:
@@ -171,7 +177,7 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
       - "--storage.tsdb.retention.time=7d"
-      - "--web.external-url=/prometheus/"
+      - "--web.external-url=http://4.233.219.209/prometheus/"
       - "--web.route-prefix=/prometheus/"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -186,9 +192,9 @@ services:
     image: grafana/grafana:10.2.0
     container_name: grafana
     environment:
-      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-      - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
+      - GF_SERVER_ROOT_URL=http://4.233.219.209/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -264,6 +270,52 @@ services:
     restart: unless-stopped
     mem_limit: 256m
 
+  authentik-server:
+    image: ghcr.io/goauthentik/server:2024.8.1
+    container_name: authentik-server
+    ports:
+      - "9000:9000"
+    environment:
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+      - AUTHENTIK_POSTGRESQL__HOST=postgres-primary
+      - AUTHENTIK_POSTGRESQL__NAME=authentik
+      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
+      - AUTHENTIK_REDIS__HOST=redis
+      - AUTHENTIK_REDIS__PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - authentik_media:/media
+      - authentik_pgdata:/pg
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      - postgres-primary
+      - redis
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:2024.8.1
+    container_name: authentik-worker
+    command: worker
+    environment:
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+      - AUTHENTIK_POSTGRESQL__HOST=postgres-primary
+      - AUTHENTIK_POSTGRESQL__NAME=authentik
+      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
+      - AUTHENTIK_REDIS__HOST=redis
+      - AUTHENTIK_REDIS__PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - authentik_media:/media
+      - authentik_pgdata:/pg
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+    mem_limit: 256m
+
 # ==========================================
 # RÉSEAUX
 # ==========================================
@@ -276,7 +328,7 @@ networks:
     driver: bridge
 
 # ==========================================
-# VOLUMES PERSISTANTS
+# VOLUMES PERSISTANTS (section unique)
 # ==========================================
 volumes:
   postgres_primary_data:
@@ -286,3 +338,5 @@ volumes:
   grafana_data:
   alertmanager_data:
   loki_data:
+  authentik_media:
+  authentik_pgdata:
