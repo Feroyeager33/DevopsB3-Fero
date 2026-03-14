@@ -6,22 +6,10 @@ route:
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-  receiver: "email-notifications"
-  routes:
-    - match:
-        severity: critical
-      receiver: "email-notifications"
-      repeat_interval: 1h
+  receiver: "null-receiver"
 
 receivers:
-  - name: "email-notifications"
-    email_configs:
-      - to: "your_email@gmail.com"
-        from: "your_email@gmail.com"
-        smarthost: "smtp.gmail.com:587"
-        auth_username: "your_email@gmail.com"
-        auth_password: "your_app_password"
-        send_resolved: true
+  - name: "null-receiver"
 
 inhibit_rules:
   - source_match:
