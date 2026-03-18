@@ -1,12 +1,92 @@
-# Infra Docker – Projet B3 SR
-## Équipe
-- Ferhat Bayrak – Abdessamad Makhloufi - Aimé Mbadinga - Mondi Xharda
+# 🚀 InfraLab – **Plateforme DevOps complète sur Azure**
+# 📌 Description du projet
+InfraLab est une plateforme DevOps complète déployée avec une approche cloud-native et orientée observabilité, sécurité et scalabilité.
 
-## 📖 Résumé
-Ce projet propose une **infrastructure conteneurisée complète**. 
-L’infra est 100 % Docker, prête à être déployée sur **VM Ubuntu Azure**.
+Ce projet met en œuvre une infrastructure conteneurisée basée sur Docker et orchestrée via Docker Compose, intégrant :
+  -  Une application web (Flask)
+  -  Un reverse proxy (Nginx)
+  -  Une authentification sécurisée (Authelia)
+  -  Une base de données PostgreSQL avec réplication
 
-## 🚀 Objectifs
-## 🏗 Architecture
-## 💾 Structure du projet
+Une stack de monitoring complète :
+  -  Prometheus
+  -  Grafana
+  -  Loki
+  -  Promtail
+  -  Alertmanager
 
+L’objectif est de simuler une infrastructure DevOps réaliste, prête pour un déploiement cloud (notamment sur Azure).
+
+# ⚙️ Pré-requis
+
+
+
+# 🧱 Architecture
+
+```mermaid
+
+
+```
+
+# 🛠️ Installation
+1. Cloner le projet
+
+`git clone https://github.com/ton-username/infralab.git`
+
+`cd infralab`
+
+2. Lancer l’infrastructure
+
+`docker-compose up -d --build`
+
+3. Vérifier les services
+
+`docker ps`
+
+### **⚠️ Problèmes possibles**
+
+❌ Ports déjà utilisés → modifier les ports dans docker-compose.yml
+
+❌ Erreur Grafana provisioning → utiliser docker-compose-grafana-fix.yml
+
+❌ Permissions fichiers → ` chmod -R 755 `
+
+
+# ▶️ Utilisation
+### **🌐 Accès aux services**
+
+### **🔐 Authentification**
+Le projet utilise Authelia pour sécuriser l’accès :
+Gestion des utilisateurs via users_database.yml
+Configuration dans configuration.yml
+### **📊 Monitoring** 
+Prometheus collecte les métriques
+Grafana affiche les dashboards
+Loki + Promtail gèrent les logs
+Alertmanager gère les alertes
+### **🧪 Tests**
+bash scripts/test-local.sh
+
+
+# 👥 Contributeurs
+**Ferhat Bayrak – Abdessamad Maklhoufi - Mondi Xharda - Aimé Désyre Mbadinga** 
+
+
+# 🔗 Ressources utiles
+Documentation Docker : 
+
+https://docs.docker.com/
+
+Documentation Terraform : 
+
+https://developer.hashicorp.com/terraform
+
+
+💬 Retours d’expérience
+Ce projet permet de :
+Comprendre une architecture DevOps complète
+Mettre en pratique :
+Observabilité
+Sécurité
+Infrastructure as Code
+Simuler un environnement production-ready
