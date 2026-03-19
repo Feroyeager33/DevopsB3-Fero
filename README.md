@@ -19,6 +19,11 @@ L’objectif est de simuler une infrastructure DevOps réaliste, prête pour un 
 
 # ⚙️ Pré-requis
 
+UBUNTU -> Version 24.04
+
+DOCKER -> Version 29.3
+
+DOCKER COMPOSE -> Version 5.1
 
 
 # 🧱 Architecture
@@ -47,7 +52,7 @@ L’objectif est de simuler une infrastructure DevOps réaliste, prête pour un 
 
 ❌ Ports déjà utilisés → modifier les ports dans docker-compose.yml
 
-❌ Erreur Grafana provisioning → utiliser docker-compose-grafana-fix.yml
+❌ Ouvrir les ports sur Azure
 
 ❌ Permissions fichiers → ` chmod -R 755 `
 
@@ -80,13 +85,3 @@ https://docs.docker.com/
 Documentation Terraform : 
 
 https://developer.hashicorp.com/terraform
-
-
-💬 Retours d’expérience
-Ce projet permet de :
-Comprendre une architecture DevOps complète
-Mettre en pratique :
-Observabilité
-Sécurité
-Infrastructure as Code
-Simuler un environnement production-ready
