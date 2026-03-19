@@ -1,0 +1,53 @@
+# app/docker-compose.yml
+services:
+  webapp-1: &webapp_template
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webapp-1
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_SECRET_KEY=${APP_SECRET_KEY}
+      - POSTGRES_PRIMARY_HOST=postgres-primary
+      - POSTGRES_REPLICA_HOST=postgres-replica
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - frontend
+      - backend
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  webapp-2:
+    <<: *webapp_template
+    container_name: webapp-2
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  frontend:
+    external: true
+  backend:
+    external: true
+  monitoring:
+    external: true
+

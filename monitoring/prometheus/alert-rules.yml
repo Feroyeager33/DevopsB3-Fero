@@ -1,58 +1,65 @@
 groups:
-  - name: infrastructure
+  - name: container_alerts
     rules:
       - alert: ContainerDown
         expr: up == 0
-        for: 1m
+        for: 15s
         labels:
           severity: critical
         annotations:
-          summary: "Service {{ $labels.job }} est DOWN"
-          description: "Le service {{ $labels.instance }} ne répond plus depuis 1 minute."
+          summary: "🔴 {{ $labels.job }} - {{ $labels.instance }} est DOWN"
+          description: "Le service {{ $labels.job }} sur {{ $labels.instance }} ne répond plus depuis 15s."
+
+      - alert: WebappDown
+        expr: up{job="webapp"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "🔴 WEBAPP DOWN: {{ $labels.instance }}"
+          description: "Le conteneur webapp {{ $labels.instance }} est arrêté depuis 15 secondes."
 
       - alert: HighCpuUsage
-        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 5m
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "CPU élevé sur {{ $labels.instance }}"
-          description: "L'utilisation CPU dépasse 80% depuis 5 minutes."
+          summary: "⚠️ CPU élevé sur {{ $labels.instance }}"
+          description: "Usage CPU > 80% depuis 2 minutes."
 
       - alert: HighMemoryUsage
         expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ RAM élevée sur {{ $labels.instance }}"
+          description: "Usage mémoire > 85% depuis 2 minutes."
+
+      - alert: ContainerHighCpu
+        expr: rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ Container {{ $labels.name }} CPU élevé"
+          description: "Le conteneur {{ $labels.name }} utilise beaucoup de CPU."
+
+      - alert: ContainerHighMemory
+        expr: container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""} * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ Container {{ $labels.name }} RAM élevée"
+          description: "Le conteneur {{ $labels.name }} utilise > 85% de sa limite mémoire."
+
+      - alert: DiskSpaceLow
+        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 > 80
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Mémoire élevée sur {{ $labels.instance }}"
-          description: "L'utilisation mémoire dépasse 85%."
-
-      - alert: DiskSpaceRunningOut
-        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 80
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Espace disque faible"
-          description: "L'espace disque utilisé dépasse 80%."
-
-  - name: application
-    rules:
-      - alert: HighErrorRate
-        expr: rate(flask_http_request_total{status=~"5.."}[5m]) / rate(flask_http_request_total[5m]) > 0.05
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Taux d'erreurs HTTP 5xx élevé"
-          description: "Plus de 5% des requêtes retournent une erreur 500+."
-
-      - alert: HighResponseTime
-        expr: histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket[5m])) > 2
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Temps de réponse élevé"
-          description: "Le P95 du temps de réponse dépasse 2 secondes."
+          summary: "⚠️ Disque presque plein"
+          description: "Usage disque > 80% sur {{ $labels.instance }}."

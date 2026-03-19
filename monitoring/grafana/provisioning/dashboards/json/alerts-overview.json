@@ -1,0 +1,144 @@
+{
+  "dashboard": {
+    "uid": "alerts-overview",
+    "title": "🚨 Alerts - Overview & History",
+    "tags": ["infralab", "alerts"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": { "from": "now-6h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "🔴 Active Alerts (Firing)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "targets": [{ "expr": "count(ALERTS{alertstate=\"firing\"}) or vector(0)", "instant": true }],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 3 }] }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "⚠️ Pending Alerts",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "targets": [{ "expr": "count(ALERTS{alertstate=\"pending\"}) or vector(0)", "instant": true }],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }] }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "🟢 Targets UP",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "targets": [{ "expr": "count(up == 1)", "instant": true }],
+        "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
+      },
+      {
+        "id": 4,
+        "title": "🔴 Targets DOWN",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "targets": [{ "expr": "count(up == 0) or vector(0)", "instant": true }],
+        "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
+      },
+      {
+        "id": 5,
+        "title": "All Active Alerts Details",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "targets": [{
+          "expr": "ALERTS{alertstate=~\"firing|pending\"}",
+          "format": "table",
+          "instant": true
+        }],
+        "transformations": [
+          { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true, "Value": false } } }
+        ],
+        "fieldConfig": {
+          "overrides": [{
+            "matcher": { "id": "byName", "options": "alertstate" },
+            "properties": [{
+              "id": "custom.cellOptions",
+              "value": { "type": "color-background" }
+            }, {
+              "id": "mappings",
+              "value": [
+                { "type": "value", "options": { "firing": { "text": "🔴 FIRING", "color": "red" }, "pending": { "text": "⚠️ PENDING", "color": "yellow" } } }
+              ]
+            }]
+          }]
+        }
+      },
+      {
+        "id": 6,
+        "title": "Alerts Timeline (Firing)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "targets": [{
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "legendFormat": "{{ alertname }} - {{ instance }}"
+        }],
+        "fieldConfig": {
+          "defaults": {
+            "custom": { "fillOpacity": 30, "lineWidth": 2, "drawStyle": "bars" },
+            "thresholds": { "steps": [{ "color": "red", "value": null }] },
+            "color": { "mode": "fixed", "fixedColor": "red" }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Target Health Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "targets": [{
+          "expr": "up",
+          "legendFormat": "{{ job }} - {{ instance }}"
+        }],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0, "max": 1,
+            "custom": { "fillOpacity": 20, "lineWidth": 2, "gradientMode": "scheme", "thresholdsStyle": { "mode": "area" } },
+            "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] },
+            "mappings": [
+              { "type": "value", "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } } }
+            ]
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Webapp Availability",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "targets": [
+          { "expr": "up{job=\"webapp\",instance=\"webapp-1:5000\"}", "legendFormat": "webapp-1" },
+          { "expr": "up{job=\"webapp\",instance=\"webapp-2:5000\"}", "legendFormat": "webapp-2" }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0, "max": 1,
+            "custom": { "fillOpacity": 30, "lineWidth": 3, "drawStyle": "line", "stacking": { "mode": "none" } },
+            "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+          }
+        }
+      }
+    ],
+    "schemaVersion": 39
+  },
+  "overwrite": true
+}

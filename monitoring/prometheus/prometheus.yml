@@ -2,26 +2,29 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
 alerting:
   alertmanagers:
     - static_configs:
         - targets: ['alertmanager:9093']
-      path_prefix: '/alertmanager/'
-
-rule_files:
-  - /etc/prometheus/alert-rules.yml
+      path_prefix: /alertmanager
 
 scrape_configs:
-
   - job_name: 'prometheus'
-    metrics_path: '/prometheus/metrics'
+    metrics_path: /prometheus/metrics
     static_configs:
       - targets: ['localhost:9090']
 
   - job_name: 'webapp'
+    metrics_path: /metrics
+    scrape_interval: 10s
+    fallback_scrape_protocol: PrometheusText0.0.4
     static_configs:
       - targets: ['webapp-1:5000', 'webapp-2:5000']
-    metrics_path: '/metrics'
+        labels:
+          group: 'webapps'
 
   - job_name: 'node-exporter'
     static_configs:
@@ -30,3 +33,7 @@ scrape_configs:
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
+
+  - job_name: 'vm-infralab'
+    static_configs:
+      - targets: ['4.233.219.209:9100']

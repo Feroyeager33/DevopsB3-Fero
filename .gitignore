@@ -1,26 +1,89 @@
-# Secrets
+# ============================================================
+# SECRETS & CREDENTIALS
+# ============================================================
 .env
-*.tfvars
-!*.tfvars.example
+.env.*
+!.env.example
 
-# Terraform
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/.terraform.lock.hcl
+# Certificats TLS
+certs/
+*.crt
+*.key
+*.pem
+*.p12
+*.pfx
 
-# Docker
+# Nginx htpasswd / basic auth
+nginx/auth/
+
+# ============================================================
+# DONNÉES PERSISTANTES (volumes locaux)
+# ============================================================
+postgres/primary/data/
+postgres/replica/data/
+
+# Loki WAL et chunks
+loki/
+loki-wal/
+
+# Grafana data (si monté localement un jour)
+monitoring/grafana/data/
+
+# ============================================================
+# FICHIERS TEMPORAIRES / BACKUPS
+# ============================================================
+*.save
+*.bak
+*.tmp
 *.log
+*.swp
+*~
 
-# Python
+# ============================================================
+# PYTHON (app/)
+# ============================================================
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+app/tests/__pycache__/
 .pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
 
-# IDE
-.vscode/
-.idea/
+# Virtualenv local (si jamais créé dans le projet)
+venv/
+.venv/
+env/
 
-# OS
+# ============================================================
+# DOCKER
+# ============================================================
+# Override locaux (spécifiques à chaque dev/env)
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ============================================================
+# DOCS / RAPPORTS GÉNÉRÉS
+# ============================================================
+docs/*.pdf
+docs/*.html
+
+# ============================================================
+# OS & ÉDITEURS
+# ============================================================
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Fichiers backup/fix temporaires
+*.backup
+*-backup
+*-fix.yml
+scripts/test-*.sh

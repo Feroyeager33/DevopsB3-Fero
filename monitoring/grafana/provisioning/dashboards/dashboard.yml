@@ -1,11 +1,13 @@
 apiVersion: 1
 
 providers:
-  - name: "InfraLab Dashboards"
+  - name: 'InfraLab'
     orgId: 1
-    folder: "InfraLab"
+    folder: 'InfraLab'
     type: file
     disableDeletion: false
+    editable: true
     updateIntervalSeconds: 30
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: false

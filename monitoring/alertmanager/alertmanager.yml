@@ -1,33 +1,18 @@
 global:
   resolve_timeout: 5m
-  smtp_smarthost: "mailhog:1025"
-  smtp_from: "alertmanager@infralab.local"
+  smtp_smarthost: 'mailhog:1025'
+  smtp_from: 'alertmanager@infralab.local'
   smtp_require_tls: false
 
 route:
-  group_by: ["alertname", "severity"]
+  receiver: 'mailhog'
+  group_by: ['alertname']
   group_wait: 10s
-  group_interval: 1m
-  repeat_interval: 2h
-  receiver: "mailhog-notifications"
-
-  routes:
-    - match:
-        severity: critical
-      receiver: "mailhog-notifications"
-      repeat_interval: 30m
+  group_interval: 10s
+  repeat_interval: 1h
 
 receivers:
-  - name: "mailhog-notifications"
+  - name: 'mailhog'
     email_configs:
-      - to: "admin@infralab.local"
+      - to: 'admin@infralab.local'
         send_resolved: true
-        headers:
-          Subject: "[InfraLab ALERT] {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}"
-
-inhibit_rules:
-  - source_match:
-      severity: "critical"
-    target_match:
-      severity: "warning"
-    equal: ["instance"]

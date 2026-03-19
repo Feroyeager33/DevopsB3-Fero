@@ -2,44 +2,986 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>InfraLab - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfraLab // Command Center</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        h1 { color: #00d4ff; text-align: center; }
-        .card { background: #16213e; border-radius: 10px; padding: 20px; margin: 15px 0; border-left: 4px solid #00d4ff; }
-        .card h3 { color: #00d4ff; margin-top: 0; }
-        .info { display: flex; justify-content: space-between; flex-wrap: wrap; }
-        .info-item { flex: 1; min-width: 200px; margin: 10px; }
-        .badge { background: #0f3460; padding: 5px 15px; border-radius: 20px; display: inline-block; }
-        .healthy { border-color: #00ff88; }
-        .links a { color: #00d4ff; text-decoration: none; margin: 0 10px; }
-        .links { text-align: center; margin: 20px 0; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --cyan: #00f0ff;
+            --green: #00ff88;
+            --red: #ff0040;
+            --orange: #ff8800;
+            --purple: #b400ff;
+            --bg-dark: #0a0a0f;
+            --bg-card: #0d1117;
+            --bg-card-hover: #161b22;
+            --border: #1a2332;
+            --text-dim: #4a5568;
+            --text: #c9d1d9;
+            --glow-cyan: 0 0 20px rgba(0, 240, 255, 0.3);
+            --glow-green: 0 0 20px rgba(0, 255, 136, 0.3);
+            --glow-red: 0 0 20px rgba(255, 0, 64, 0.3);
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* === MATRIX RAIN BACKGROUND === */
+        #matrix-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        /* === SCAN LINE === */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 240, 255, 0.008) 2px,
+                rgba(0, 240, 255, 0.008) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* === HEADER === */
+        .header {
+            position: relative;
+            z-index: 10;
+            padding: 25px 40px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(0,240,255,0.03) 0%, transparent 100%);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            letter-spacing: 3px;
+        }
+
+        .logo span {
+            -webkit-text-fill-color: var(--green);
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .live-dot {
+            width: 8px; height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+            box-shadow: var(--glow-green);
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 30px;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .header-meta strong {
+            color: var(--cyan);
+        }
+
+        /* === MAIN GRID === */
+        .dashboard {
+            position: relative;
+            z-index: 10;
+            padding: 25px 40px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto auto auto auto;
+            gap: 16px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* === CARDS === */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(0, 240, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before { opacity: 1; }
+
+        .card-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title .icon {
+            font-size: 14px;
+        }
+
+        /* === SERVICE STATUS CARDS (top row) === */
+        .service-grid {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+
+        .service-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 14px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .service-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 240, 255, 0.3);
+        }
+
+        .service-card.online { border-top: 2px solid var(--green); }
+        .service-card.offline { border-top: 2px solid var(--red); }
+        .service-card.warning { border-top: 2px solid var(--orange); }
+        .service-card.checking { border-top: 2px solid var(--text-dim); }
+
+        .service-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .service-name {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .service-status {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .service-card.online .service-status { color: var(--green); background: rgba(0,255,136,0.1); }
+        .service-card.offline .service-status { color: var(--red); background: rgba(255,0,64,0.1); }
+        .service-card.warning .service-status { color: var(--orange); background: rgba(255,136,0,0.1); }
+        .service-card.checking .service-status { color: var(--text-dim); background: rgba(74,85,104,0.2); }
+
+        .service-detail {
+            font-size: 9px;
+            color: var(--text-dim);
+            margin-top: 6px;
+        }
+
+        /* === CHART AREAS === */
+        .chart-wide {
+            grid-column: span 2;
+        }
+
+        .chart-full {
+            grid-column: 1 / -1;
+        }
+
+        .canvas-container {
+            position: relative;
+            height: 180px;
+            margin-top: 10px;
+        }
+
+        .canvas-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* === BIG NUMBERS === */
+        .big-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--cyan);
+            line-height: 1;
+        }
+
+        .big-number.green { color: var(--green); }
+        .big-number.red { color: var(--red); }
+        .big-number.orange { color: var(--orange); }
+
+        .big-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* === DB REPLICATION VISUAL === */
+        .replication-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .db-node {
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 18px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .db-node.primary-node { border-color: var(--cyan); }
+        .db-node.replica-node { border-color: var(--purple); }
+        .db-node.offline-node { border-color: var(--red); opacity: 0.5; }
+
+        .db-node-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+        }
+
+        .db-node-status {
+            font-size: 18px;
+            margin: 6px 0;
+        }
+
+        .db-node-info {
+            font-size: 10px;
+            color: var(--cyan);
+        }
+
+        .flow-arrow {
+            color: var(--green);
+            font-size: 20px;
+            animation: flow-pulse 1.5s infinite;
+        }
+
+        .flow-arrow.broken {
+            color: var(--red);
+            animation: none;
+        }
+
+        @keyframes flow-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* === TERMINAL LOG === */
+        .terminal {
+            background: #000;
+            border: 1px solid #1a1a1a;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 11px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .terminal::-webkit-scrollbar { width: 4px; }
+        .terminal::-webkit-scrollbar-track { background: #000; }
+        .terminal::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        .log-line {
+            padding: 2px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-time { color: #555; }
+        .log-ok { color: var(--green); }
+        .log-err { color: var(--red); }
+        .log-warn { color: var(--orange); }
+        .log-info { color: var(--cyan); }
+
+        /* === NAV LINKS === */
+        .nav-grid {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--cyan);
+            color: var(--cyan);
+            box-shadow: var(--glow-cyan);
+            transform: translateY(-2px);
+        }
+
+        .nav-link .nav-icon { font-size: 18px; }
+
+        /* === LOAD BALANCING INDICATOR === */
+        .lb-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+
+        .lb-node {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .lb-node.active {
+            border-color: var(--cyan);
+            box-shadow: var(--glow-cyan);
+            color: var(--cyan);
+        }
+
+        .lb-node.inactive {
+            opacity: 0.4;
+        }
+
+        .lb-arrow {
+            color: var(--green);
+            font-size: 16px;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 1200px) {
+            .dashboard { grid-template-columns: repeat(2, 1fr); padding: 15px; }
+            .service-grid { grid-template-columns: repeat(4, 1fr); }
+            .nav-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; padding: 10px; }
+            .service-grid { grid-template-columns: repeat(2, 1fr); }
+            .nav-grid { grid-template-columns: repeat(2, 1fr); }
+            .header { padding: 15px; }
+            .logo { font-size: 20px; }
+        }
+
+        /* === LOADING SHIMMER === */
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        .loading {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* === UPTIME BAR === */
+        .uptime-bar {
+            display: flex;
+            gap: 2px;
+            margin-top: 10px;
+        }
+
+        .uptime-segment {
+            flex: 1;
+            height: 20px;
+            border-radius: 2px;
+            background: var(--green);
+            opacity: 0.8;
+            transition: all 0.3s;
+        }
+
+        .uptime-segment.down { background: var(--red); }
+        .uptime-segment.degraded { background: var(--orange); }
+
+        .uptime-segment:hover {
+            opacity: 1;
+            transform: scaleY(1.3);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 InfraLab - Infrastructure Dashboard</h1>
-        <div class="card">
-            <h3>Informations du conteneur</h3>
-            <div class="info">
-                <div class="info-item"><strong>Hostname :</strong> <span class="badge">{{ hostname }}</span></div>
-                <div class="info-item"><strong>Environnement :</strong> <span class="badge">{{ environment }}</span></div>
-                <div class="info-item"><strong>Timestamp :</strong> <span class="badge">{{ timestamp }}</span></div>
-                <div class="info-item"><strong>Visites totales :</strong> <span class="badge">{{ visits }}</span></div>
+    <canvas id="matrix-bg"></canvas>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-top">
+            <div>
+                <div class="logo">INFRALAB <span>// COMMAND CENTER v1.0</span></div>
+            </div>
+            <div class="header-status">
+                <div class="live-dot"></div>
+                <span>SYSTEM LIVE</span>
+                <span id="clock" style="color: var(--cyan); font-family: 'Orbitron', sans-serif; font-size: 13px;"></span>
             </div>
         </div>
-        <div class="card healthy">
-            <h3>⚖️ Load Balancing Demo</h3>
-            <p>Rechargez cette page plusieurs fois : le <strong>hostname</strong> change entre les 2 instances, prouvant que le load balancing Nginx fonctionne.</p>
+        <div class="header-meta">
+            <span>NODE: <strong>{{ hostname }}</strong></span>
+            <span>ENV: <strong>{{ environment }}</strong></span>
+            <span>SESSIONS: <strong>{{ visits }}</strong></span>
+            <span>UPLINK: <strong id="uptime-display">00:00:00</strong></span>
         </div>
-        <div class="links">
-            <a href="/health">🩺 Healthcheck</a> |
-            <a href="/api/info">ℹ️ API Info</a> |
-            <a href="/api/db-status">🗄️ DB Replication</a> |
-            <a href="/grafana">📊 Grafana</a> |
-            <a href="/prometheus">🔥 Prometheus</a>
+    </header>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard">
+
+        <!-- ROW 1: Service Status Cards -->
+        <div class="service-grid">
+            <div class="service-card checking" id="svc-nginx">
+                <div class="service-icon">🌐</div>
+                <div class="service-name">Nginx</div>
+                <div class="service-status">CHECKING</div>
+                <div class="service-detail" id="svc-nginx-detail">proxy/lb</div>
+            </div>
+            <div class="service-card checking" id="svc-webapp1">
+                <div class="service-icon">⚡</div>
+                <div class="service-name">Webapp-1</div>
+                <div class="service-status">CHECKING</div>
+                <div class="service-detail" id="svc-webapp1-detail">flask/gunicorn</div>
+            </div>
+            <div class="service-card checking" id="svc-webapp2">
+                <div class="service-icon">⚡</div>
+                <div class="service-name">Webapp-2</div>
+                <div class="service-status">CHECKING</div>
+                <div class="service-detail" id="svc-webapp2-detail">flask/gunicorn</div>
+            </div>
+            <div class="service-card checking" id="svc-postgres">
+                <div class="service-icon">🐘</div>
+                <div class="service-name">PG Primary</div>
+                <div class="service-status">CHECKING</div>
+                <div class="service-detail" id="svc-postgres-detail">master</div>
+            </div>
+            <div class="service-card checking" id="svc-replica">
+                <div class="service-icon">🐘</div>
+                <div class="service-name">PG Replica</div>
+                <div class="service-status">CHECKING</div>
+                <div class="service-detail" id="svc-replica-detail">standby</div>
+            </div>
+            <div class="service-card checking" id="svc-redis">
+                <div class="service-icon">🔴</div>
+                <div class="service-name">Redis</div>
+                <div class="service-status">CHECKING</div>
+                <div class="service-detail" id="svc-redis-detail">cache</div>
+            </div>
+            <div class="service-card checking" id="svc-prometheus">
+                <div class="service-icon">🔥</div>
+                <div class="service-name">Prometheus</div>
+                <div class="service-status">CHECKING</div>
+                <div class="service-detail" id="svc-prometheus-detail">metrics</div>
+            </div>
         </div>
+
+        <!-- ROW 2: Stats + Charts -->
+        <div class="card">
+            <div class="card-title"><span class="icon">📊</span> TOTAL REQUESTS</div>
+            <div class="big-number" id="total-visits">{{ visits }}</div>
+            <div class="big-label">sessions enregistrées</div>
+            <div style="margin-top: 15px;">
+                <div class="card-title"><span class="icon">⚖️</span> LOAD BALANCER</div>
+                <div class="lb-visual">
+                    <div class="lb-node inactive" id="lb-node1">W1</div>
+                    <div class="lb-arrow">⇄</div>
+                    <div class="lb-node inactive" id="lb-node2">W2</div>
+                </div>
+                <div style="text-align:center; font-size: 10px; color: var(--text-dim);">
+                    Active: <span style="color: var(--cyan);" id="active-node">{{ hostname }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span class="icon">💾</span> REDIS CACHE</div>
+            <div class="big-number green" id="redis-keys">-</div>
+            <div class="big-label">clés stockées</div>
+            <div style="margin-top: 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin: 6px 0;">
+                    <span style="color: var(--text-dim);">Mémoire</span>
+                    <span style="color: var(--green);" id="redis-mem">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin: 6px 0;">
+                    <span style="color: var(--text-dim);">Clients connectés</span>
+                    <span style="color: var(--cyan);" id="redis-clients">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin: 6px 0;">
+                    <span style="color: var(--text-dim);">Uptime</span>
+                    <span style="color: var(--cyan);" id="redis-uptime">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card chart-wide">
+            <div class="card-title"><span class="icon">📈</span> RESPONSE TIME (ms)</div>
+            <div class="canvas-container">
+                <canvas id="latencyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ROW 3: DB Replication + Terminal -->
+        <div class="card chart-wide">
+            <div class="card-title"><span class="icon">🗄️</span> DATABASE REPLICATION</div>
+            <div class="replication-flow">
+                <div class="db-node primary-node" id="db-primary-node">
+                    <div class="db-node-label">PRIMARY</div>
+                    <div class="db-node-status">🟢</div>
+                    <div class="db-node-info" id="db-primary-info">Checking...</div>
+                </div>
+                <div class="flow-arrow" id="repl-arrow">▶▶▶</div>
+                <div class="db-node replica-node" id="db-replica-node">
+                    <div class="db-node-label">REPLICA</div>
+                    <div class="db-node-status" id="db-replica-status">🟡</div>
+                    <div class="db-node-info" id="db-replica-info">Checking...</div>
+                </div>
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin: 4px 0;">
+                    <span style="color: var(--text-dim);">DB Size</span>
+                    <span style="color: var(--cyan);" id="db-size">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin: 4px 0;">
+                    <span style="color: var(--text-dim);">Active Connections</span>
+                    <span style="color: var(--cyan);" id="db-connections">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin: 4px 0;">
+                    <span style="color: var(--text-dim);">WAL Position</span>
+                    <span style="color: var(--green); font-size: 10px;" id="db-wal">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card chart-wide">
+            <div class="card-title"><span class="icon">🖥️</span> SYSTEM LOG</div>
+            <div class="terminal" id="terminal"></div>
+        </div>
+
+        <!-- ROW 4: Health Checks over time -->
+        <div class="card chart-full">
+            <div class="card-title"><span class="icon">🩺</span> HEALTH CHECK HISTORY (last 60 checks)</div>
+            <div class="canvas-container" style="height: 120px;">
+                <canvas id="healthChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ROW 5: Navigation -->
+        <div class="nav-grid">
+            <a href="/grafana/" class="nav-link">
+                <span class="nav-icon">📊</span> GRAFANA
+            </a>
+            <a href="/prometheus/" class="nav-link">
+                <span class="nav-icon">🔥</span> PROMETHEUS
+            </a>
+            <a href="/alertmanager/" class="nav-link">
+                <span class="nav-icon">🚨</span> ALERTMANAGER
+            </a>
+            <a href="/mailhog/" class="nav-link">
+                <span class="nav-icon">📧</span> MAILHOG
+            </a>
+            <a href="/health" class="nav-link">
+                <span class="nav-icon">🩺</span> HEALTH JSON
+            </a>
+        </div>
+
     </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script>
+        // ========================================
+        // MATRIX RAIN BACKGROUND
+        // ========================================
+        const matrixCanvas = document.getElementById('matrix-bg');
+        const mCtx = matrixCanvas.getContext('2d');
+        matrixCanvas.width = window.innerWidth;
+        matrixCanvas.height = window.innerHeight;
+        const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEF';
+        const fontSize = 14;
+        const columns = matrixCanvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            mCtx.fillStyle = 'rgba(10, 10, 15, 0.05)';
+            mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            mCtx.fillStyle = '#00f0ff';
+            mCtx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                mCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // ========================================
+        // CLOCK
+        // ========================================
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent =
+                now.toLocaleTimeString('fr-FR', { hour12: false }) + '.' +
+                String(now.getMilliseconds()).padStart(3, '0');
+        }
+        setInterval(updateClock, 100);
+
+        // ========================================
+        // UPTIME COUNTER
+        // ========================================
+        const startTime = Date.now();
+        function updateUptime() {
+            const diff = Math.floor((Date.now() - startTime) / 1000);
+            const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+            const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            const s = String(diff % 60).padStart(2, '0');
+            document.getElementById('uptime-display').textContent = `${h}:${m}:${s}`;
+        }
+        setInterval(updateUptime, 1000);
+
+        // ========================================
+        // TERMINAL LOG
+        // ========================================
+        const terminal = document.getElementById('terminal');
+        function addLog(type, message) {
+            const time = new Date().toLocaleTimeString('fr-FR', { hour12: false });
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-${type}">${message}</span>`;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+            // Keep max 50 lines
+            while (terminal.children.length > 50) terminal.removeChild(terminal.firstChild);
+        }
+
+        addLog('info', '> InfraLab Command Center initialized');
+        addLog('info', '> Connecting to backend services...');
+
+        // ========================================
+        // CHARTS SETUP
+        // ========================================
+        const latencyData = Array(60).fill(0);
+        const healthData = Array(60).fill(1);
+        const healthLabels = Array(60).fill('');
+
+        // Latency Chart
+        const latencyChart = new Chart(document.getElementById('latencyChart'), {
+            type: 'line',
+            data: {
+                labels: latencyData.map((_, i) => ''),
+                datasets: [{
+                    data: latencyData,
+                    borderColor: '#00f0ff',
+                    backgroundColor: 'rgba(0, 240, 255, 0.05)',
+                    borderWidth: 1.5,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHitRadius: 10,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255,255,255,0.03)' },
+                        ticks: { color: '#4a5568', font: { size: 10, family: 'JetBrains Mono' }, callback: v => v + 'ms' }
+                    }
+                },
+                animation: { duration: 300 }
+            }
+        });
+
+        // Health Chart
+        const healthChart = new Chart(document.getElementById('healthChart'), {
+            type: 'bar',
+            data: {
+                labels: healthData.map((_, i) => ''),
+                datasets: [{
+                    data: healthData,
+                    backgroundColor: healthData.map(v => v === 1 ? 'rgba(0,255,136,0.6)' : 'rgba(255,0,64,0.6)'),
+                    borderRadius: 2,
+                    barPercentage: 0.8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false, min: 0, max: 1.2 }
+                },
+                animation: { duration: 200 }
+            }
+        });
+
+        // ========================================
+        // SERVICE STATUS UPDATE
+        // ========================================
+        function setServiceStatus(id, status, detail) {
+            const card = document.getElementById(id);
+            card.className = 'service-card ' + status;
+            card.querySelector('.service-status').textContent = status.toUpperCase();
+            if (detail) document.getElementById(id + '-detail').textContent = detail;
+        }
+
+        // ========================================
+        // FETCH DATA LOOP
+        // ========================================
+        let checkCount = 0;
+
+        async function fetchHealth() {
+            const start = performance.now();
+            try {
+                const res = await fetch('/health');
+                const data = await res.json();
+                const latency = Math.round(performance.now() - start);
+
+                // Update latency chart
+                latencyData.push(latency);
+                latencyData.shift();
+                latencyChart.data.datasets[0].data = [...latencyData];
+                latencyChart.update('none');
+
+                // Health chart
+                const isHealthy = data.status === 'healthy' ? 1 : 0.3;
+                healthData.push(isHealthy);
+                healthData.shift();
+                healthChart.data.datasets[0].data = [...healthData];
+                healthChart.data.datasets[0].backgroundColor = healthData.map(v =>
+                    v === 1 ? 'rgba(0,255,136,0.6)' : 'rgba(255,0,64,0.6)');
+                healthChart.update('none');
+
+                // Services from health
+                const pg = data.checks.postgres_primary;
+                setServiceStatus('svc-postgres', pg === 'ok' ? 'online' : 'offline',
+                    pg === 'ok' ? 'master • healthy' : 'error');
+
+                const rd = data.checks.redis;
+                setServiceStatus('svc-redis', rd === 'ok' ? 'online' : 'offline',
+                    rd === 'ok' ? 'cache • connected' : 'error');
+
+                // Nginx is online if we got here
+                setServiceStatus('svc-nginx', 'online', `proxy • ${latency}ms`);
+
+                // Current webapp is online
+                setServiceStatus('svc-webapp1', 'online', 'flask • active');
+                setServiceStatus('svc-webapp2', 'online', 'flask • standby');
+
+                addLog(data.status === 'healthy' ? 'ok' : 'warn',
+                    `HEALTH CHECK #${++checkCount} → ${data.status.toUpperCase()} [${latency}ms]`);
+
+            } catch (e) {
+                addLog('err', `HEALTH CHECK FAILED: ${e.message}`);
+                setServiceStatus('svc-nginx', 'offline', 'unreachable');
+
+                healthData.push(0.3);
+                healthData.shift();
+                healthChart.data.datasets[0].data = [...healthData];
+                healthChart.data.datasets[0].backgroundColor = healthData.map(v =>
+                    v === 1 ? 'rgba(0,255,136,0.6)' : 'rgba(255,0,64,0.6)');
+                healthChart.update('none');
+            }
+        }
+
+        async function fetchServices() {
+            try {
+                const res = await fetch('/api/services');
+                const data = await res.json();
+
+                // Redis details
+                if (data.redis) {
+                    if (data.redis.status === 'online') {
+                        document.getElementById('redis-keys').textContent = data.redis.total_keys || 0;
+                        document.getElementById('redis-mem').textContent = data.redis.used_memory_human || '-';
+                        document.getElementById('redis-clients').textContent = data.redis.connected_clients || '-';
+                        const upSec = data.redis.uptime_seconds || 0;
+                        const h = Math.floor(upSec / 3600);
+                        const m = Math.floor((upSec % 3600) / 60);
+                        document.getElementById('redis-uptime').textContent = `${h}h ${m}m`;
+                        setServiceStatus('svc-redis', 'online', `${data.redis.used_memory_human} • ${data.redis.total_keys} keys`);
+                    }
+                }
+
+                // Postgres
+                if (data.postgres_primary) {
+                    if (data.postgres_primary.status === 'online') {
+                        document.getElementById('db-size').textContent = data.postgres_primary.db_size_mb + ' MB';
+                        document.getElementById('db-connections').textContent = data.postgres_primary.active_connections;
+                        setServiceStatus('svc-postgres', 'online',
+                            `${data.postgres_primary.db_size_mb}MB • ${data.postgres_primary.replicas_connected} replica`);
+                    }
+                }
+
+                // Replica
+                if (data.postgres_replica) {
+                    if (data.postgres_replica.status === 'online') {
+                        setServiceStatus('svc-replica', 'online', 'streaming • synced');
+                        document.getElementById('db-replica-status').textContent = '🟢';
+                        document.getElementById('db-replica-info').textContent = 'Streaming';
+                        document.getElementById('repl-arrow').className = 'flow-arrow';
+                    } else {
+                        setServiceStatus('svc-replica', 'offline', data.postgres_replica.error ? 'down' : 'warning');
+                        document.getElementById('db-replica-status').textContent = '🔴';
+                        document.getElementById('db-replica-info').textContent = 'Offline';
+                        document.getElementById('repl-arrow').className = 'flow-arrow broken';
+                    }
+                }
+
+                addLog('info', `SERVICES SCAN → ${Object.keys(data).length} services checked`);
+
+            } catch (e) {
+                addLog('err', `SERVICES FETCH FAILED: ${e.message}`);
+            }
+        }
+
+        async function fetchDBStatus() {
+            try {
+                const res = await fetch('/api/db-status');
+                const data = await res.json();
+
+                if (data.primary && data.primary.status === 'ok') {
+                    document.getElementById('db-primary-info').textContent =
+                        `WAL: ${data.primary.wal_lsn || 'N/A'}`;
+                    document.getElementById('db-wal').textContent = data.primary.wal_lsn || '-';
+                }
+                if (data.replica && data.replica.status === 'ok') {
+                    document.getElementById('db-replica-info').textContent =
+                        `Recv: ${data.replica.receive_lsn || 'N/A'}`;
+                }
+            } catch (e) {
+                // silent
+            }
+        }
+
+        async function checkPrometheus() {
+            try {
+                const res = await fetch('/prometheus/-/healthy', { signal: AbortSignal.timeout(3000) });
+                setServiceStatus('svc-prometheus', res.ok ? 'online' : 'offline',
+                    res.ok ? 'scraping • active' : 'unreachable');
+            } catch (e) {
+                setServiceStatus('svc-prometheus', 'warning', 'timeout');
+            }
+        }
+
+        // Initial + intervals
+        fetchHealth();
+        fetchServices();
+        fetchDBStatus();
+        checkPrometheus();
+
+        setInterval(fetchHealth, 5000);
+        setInterval(fetchServices, 10000);
+        setInterval(fetchDBStatus, 15000);
+        setInterval(checkPrometheus, 30000);
+
+        // Visit counter update
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/info');
+                const data = await res.json();
+                const hn = data.hostname;
+                document.getElementById('active-node').textContent = hn;
+                
+                const n1 = document.getElementById('lb-node1');
+                const n2 = document.getElementById('lb-node2');
+            } catch (e) {
+                console.error("Erreur de mise à jour du compteur:", e);
+            }
+        }, 5000); // Mise à jour toutes les 5 secondes
+    </script>
 </body>
 </html>
