@@ -5,7 +5,6 @@ InfraLab est une plateforme DevOps complète déployée avec une approche cloud-
 Ce projet met en œuvre une infrastructure conteneurisée basée sur Docker et orchestrée via Docker Compose, intégrant :
   -  Une application web (Flask)
   -  Un reverse proxy (Nginx)
-  -  Une authentification sécurisée (Authelia)
   -  Une base de données PostgreSQL avec réplication
 
 Une stack de monitoring complète :
@@ -28,10 +27,8 @@ DOCKER COMPOSE -> Version 5.1
 
 # 🧱 Architecture
 
-```mermaid
+<img width="2718" height="1192" alt="image" src="https://github.com/user-attachments/assets/141f65c9-cb72-4506-ba9d-96dbf38bd32b" />
 
-
-```
 
 # 🛠️ Installation
 1. Cloner le projet
@@ -58,19 +55,11 @@ DOCKER COMPOSE -> Version 5.1
 
 
 # ▶️ Utilisation
-### **🌐 Accès aux services**
-
-### **🔐 Authentification**
-Le projet utilise Authelia pour sécuriser l’accès :
-Gestion des utilisateurs via users_database.yml
-Configuration dans configuration.yml
 ### **📊 Monitoring** 
 Prometheus collecte les métriques
 Grafana affiche les dashboards
 Loki + Promtail gèrent les logs
 Alertmanager gère les alertes
-### **🧪 Tests**
-bash scripts/test-local.sh
 
 
 # 👥 Contributeurs
